@@ -4,17 +4,14 @@ import { MegaverseMap } from '../models/types';
 
 export class MegaverseApiClient {
   private client: AxiosInstance;
-  private apiKey: string;
   private candidateId: string;
 
   constructor() {
     const { apiKey, baseUrl } = getConfig();
-    this.apiKey = apiKey;
-    this.candidateId = apiKey; // Adjust if candidateId is different from apiKey
+    this.candidateId = apiKey; // candidateId is the API key
     this.client = axios.create({
       baseURL: baseUrl,
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
     });
@@ -32,6 +29,20 @@ export class MegaverseApiClient {
     }
   }
 
+  async removePolyanet(row: number, column: number): Promise<void> {
+    try {
+      await this.client.delete('/polyanets', {
+        data: {
+          row,
+          column,
+          candidateId: this.candidateId,
+        },
+      });
+    } catch (error) {
+      throw new Error(`Failed to remove Polyanet: ${error}`);
+    }
+  }
+
   async placeSoloon(row: number, column: number, color: string): Promise<void> {
     try {
       await this.client.post('/soloons', {
@@ -42,6 +53,20 @@ export class MegaverseApiClient {
       });
     } catch (error) {
       throw new Error(`Failed to place Soloon: ${error}`);
+    }
+  }
+
+  async removeSoloon(row: number, column: number): Promise<void> {
+    try {
+      await this.client.delete('/soloons', {
+        data: {
+          row,
+          column,
+          candidateId: this.candidateId,
+        },
+      });
+    } catch (error) {
+      throw new Error(`Failed to remove Soloon: ${error}`);
     }
   }
 
@@ -58,12 +83,35 @@ export class MegaverseApiClient {
     }
   }
 
+  async removeCometh(row: number, column: number): Promise<void> {
+    try {
+      await this.client.delete('/comeths', {
+        data: {
+          row,
+          column,
+          candidateId: this.candidateId,
+        },
+      });
+    } catch (error) {
+      throw new Error(`Failed to remove Cometh: ${error}`);
+    }
+  }
+
   async getMegaverseMap(): Promise<MegaverseMap> {
     try {
       const response = await this.client.get(`/map/${this.candidateId}`);
       return response.data;
     } catch (error) {
       throw new Error(`Failed to fetch Megaverse map: ${error}`);
+    }
+  }
+
+  async getGoalMap(): Promise<MegaverseMap> {
+    try {
+      const response = await this.client.get(`/map/${this.candidateId}/goal`);
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to fetch goal map: ${error}`);
     }
   }
 }
