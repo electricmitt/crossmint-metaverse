@@ -1,6 +1,9 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, AxiosError } from 'axios';
 import { getConfig } from '../utils/config';
 import { MegaverseMap } from '../models/types';
+
+const MAX_RETRIES = 5;
+const INITIAL_BACKOFF_MS = 500;
 
 export class MegaverseApiClient {
   private client: AxiosInstance;
@@ -17,20 +20,36 @@ export class MegaverseApiClient {
     });
   }
 
+  private async withRetry<T>(fn: () => Promise<T>, retries = MAX_RETRIES, backoff = INITIAL_BACKOFF_MS): Promise<T> {
+    let attempt = 0;
+    while (true) {
+      try {
+        return await fn();
+      } catch (error) {
+        const status = (error as AxiosError)?.response?.status;
+        if ((status === 429 || status === 500) && attempt < retries) {
+          await new Promise(res => setTimeout(res, backoff));
+          attempt++;
+          backoff *= 2;
+        } else {
+          throw error;
+        }
+      }
+    }
+  }
+
   async placePolyanet(row: number, column: number): Promise<void> {
-    try {
+    return this.withRetry(async () => {
       await this.client.post('/polyanets', {
         row,
         column,
         candidateId: this.candidateId,
       });
-    } catch (error) {
-      throw new Error(`Failed to place Polyanet: ${error}`);
-    }
+    });
   }
 
   async removePolyanet(row: number, column: number): Promise<void> {
-    try {
+    return this.withRetry(async () => {
       await this.client.delete('/polyanets', {
         data: {
           row,
@@ -38,26 +57,22 @@ export class MegaverseApiClient {
           candidateId: this.candidateId,
         },
       });
-    } catch (error) {
-      throw new Error(`Failed to remove Polyanet: ${error}`);
-    }
+    });
   }
 
   async placeSoloon(row: number, column: number, color: string): Promise<void> {
-    try {
+    return this.withRetry(async () => {
       await this.client.post('/soloons', {
         row,
         column,
         color: color.toLowerCase(),
         candidateId: this.candidateId,
       });
-    } catch (error) {
-      throw new Error(`Failed to place Soloon: ${error}`);
-    }
+    });
   }
 
   async removeSoloon(row: number, column: number): Promise<void> {
-    try {
+    return this.withRetry(async () => {
       await this.client.delete('/soloons', {
         data: {
           row,
@@ -65,26 +80,22 @@ export class MegaverseApiClient {
           candidateId: this.candidateId,
         },
       });
-    } catch (error) {
-      throw new Error(`Failed to remove Soloon: ${error}`);
-    }
+    });
   }
 
   async placeCometh(row: number, column: number, direction: string): Promise<void> {
-    try {
+    return this.withRetry(async () => {
       await this.client.post('/comeths', {
         row,
         column,
         direction: direction.toLowerCase(),
         candidateId: this.candidateId,
       });
-    } catch (error) {
-      throw new Error(`Failed to place Cometh: ${error}`);
-    }
+    });
   }
 
   async removeCometh(row: number, column: number): Promise<void> {
-    try {
+    return this.withRetry(async () => {
       await this.client.delete('/comeths', {
         data: {
           row,
@@ -92,26 +103,20 @@ export class MegaverseApiClient {
           candidateId: this.candidateId,
         },
       });
-    } catch (error) {
-      throw new Error(`Failed to remove Cometh: ${error}`);
-    }
+    });
   }
 
   async getMegaverseMap(): Promise<MegaverseMap> {
-    try {
+    return this.withRetry(async () => {
       const response = await this.client.get(`/map/${this.candidateId}`);
       return response.data;
-    } catch (error) {
-      throw new Error(`Failed to fetch Megaverse map: ${error}`);
-    }
+    });
   }
 
   async getGoalMap(): Promise<MegaverseMap> {
-    try {
+    return this.withRetry(async () => {
       const response = await this.client.get(`/map/${this.candidateId}/goal`);
       return response.data;
-    } catch (error) {
-      throw new Error(`Failed to fetch goal map: ${error}`);
-    }
+    });
   }
 }
