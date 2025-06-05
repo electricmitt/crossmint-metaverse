@@ -40,8 +40,8 @@ async function main() {
   const service = new MegaverseService();
   
   try {
-    console.log('Building X pattern...');
-    await service.buildXPattern();
+    console.log('Building Crossmint logo from goal map...');
+    await service.buildFromGoalMap();
     
     console.log('\nValidating solution...');
     const currentMap = await client.getMegaverseMap();

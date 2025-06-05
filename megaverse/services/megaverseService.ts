@@ -148,4 +148,57 @@ export class MegaverseService {
       }
     });
   }
+
+  async buildFromGoalMap(): Promise<void> {
+    const goalMap = await this.apiClient.getGoalMap();
+    if (!goalMap.goal) {
+      throw new Error('No goal map available');
+    }
+
+    const grid = goalMap.goal;
+    const size = grid.length;
+
+    // Helper function to check if a cell is a Polyanet
+    const isPolyanet = (row: number, col: number): boolean => {
+      return grid[row][col] === 'POLYANET';
+    };
+
+    // Helper function to check if a cell is adjacent to a Polyanet
+    const isAdjacentToPolyanet = (row: number, col: number): boolean => {
+      const directions = [
+        { dr: -1, dc: 0 }, // up
+        { dr: 1, dc: 0 },  // down
+        { dr: 0, dc: -1 }, // left
+        { dr: 0, dc: 1 }   // right
+      ];
+
+      return directions.some(({ dr, dc }) => {
+        const newRow = row + dr;
+        const newCol = col + dc;
+        return newRow >= 0 && newRow < size && newCol >= 0 && newCol < size && isPolyanet(newRow, newCol);
+      });
+    };
+
+    // Place objects based on the goal map
+    for (let row = 0; row < size; row++) {
+      for (let col = 0; col < size; col++) {
+        const cell = grid[row][col];
+        if (!cell || cell === 'SPACE') continue;
+
+        if (cell === 'POLYANET') {
+          await this.apiClient.placePolyanet(row, col);
+        } else if (cell.endsWith('_SOLOON')) {
+          if (isAdjacentToPolyanet(row, col)) {
+            const color = cell.split('_')[0].toLowerCase();
+            await this.apiClient.placeSoloon(row, col, color);
+          } else {
+            console.warn(`Soloon at (${row}, ${col}) is not adjacent to a Polyanet. Skipping.`);
+          }
+        } else if (cell.endsWith('_COMETH')) {
+          const direction = cell.split('_')[0].toLowerCase();
+          await this.apiClient.placeCometh(row, col, direction);
+        }
+      }
+    }
+  }
 }
