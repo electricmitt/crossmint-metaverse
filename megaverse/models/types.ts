@@ -49,9 +49,9 @@ export interface Cometh extends AstralObject {
 
 // MegaverseMap type (structure may be updated based on API response)
 export interface MegaverseMap {
-  // Define according to API response
-  // Example:
-  // rows: number;
-  // columns: number;
-  // objects: AstralObject[];
+  map?: {
+    content: any[][];
+    [key: string]: any;
+  };
+  goal?: string[][];
 }

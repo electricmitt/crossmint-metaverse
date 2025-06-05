@@ -1,4 +1,5 @@
 import { MegaverseApiClient } from './api/client';
+import { MegaverseService } from './services/megaverseService';
 
 function printAsciiGrid(goalMap: any) {
   if (!goalMap || !goalMap.goal) {
@@ -36,15 +37,30 @@ function printAsciiGrid(goalMap: any) {
 
 async function main() {
   const client = new MegaverseApiClient();
+  const service = new MegaverseService();
+  
   try {
+    console.log('Building X pattern...');
+    await service.buildXPattern();
+    
+    console.log('\nValidating solution...');
     const currentMap = await client.getMegaverseMap();
     const goalMap = await client.getGoalMap();
-    console.log('Current Megaverse Map:');
+    
+    console.log('\nCurrent Megaverse Map:');
     console.dir(currentMap, { depth: null });
     console.log('\nGoal Megaverse Map (ASCII):');
     printAsciiGrid(goalMap);
+    
+    // Validate the solution
+    const isValid = await service.validateSolution();
+    console.log('\nSolution Validation:', isValid ? 'Yay! 🎉' : 'Nay :(');
+    
+    if (!isValid) {
+      console.log('\nThe current map does not match the goal map. Please check the differences above.');
+    }
   } catch (error) {
-    console.error('Error fetching megaverse maps:', error);
+    console.error('Error:', error);
   }
 }
 
