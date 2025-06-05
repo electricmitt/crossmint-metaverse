@@ -40,17 +40,21 @@ async function main() {
   const service = new MegaverseService();
   
   try {
-    console.log('Building Crossmint logo from goal map...');
+    // First, let's see what the goal map looks like
+    console.log('Fetching goal map...');
+    const goalMap = await client.getGoalMap();
+    console.log('\nGoal Megaverse Map (ASCII):');
+    printAsciiGrid(goalMap);
+    
+    // Now build the map based on the goal
+    console.log('\nBuilding Crossmint logo from goal map...');
     await service.buildFromGoalMap();
     
     console.log('\nValidating solution...');
     const currentMap = await client.getMegaverseMap();
-    const goalMap = await client.getGoalMap();
     
     console.log('\nCurrent Megaverse Map:');
     console.dir(currentMap, { depth: null });
-    console.log('\nGoal Megaverse Map (ASCII):');
-    printAsciiGrid(goalMap);
     
     // Validate the solution
     const isValid = await service.validateSolution();
