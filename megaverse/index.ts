@@ -1,13 +1,14 @@
 import { MegaverseApiClient } from './api/client';
 import { MegaverseService } from './services/megaverseService';
 
+// quick and dirty way to visualize the grid
 function printAsciiGrid(goalMap: any) {
   if (!goalMap || !goalMap.goal) {
-    console.log('No goal map data to display.');
+    console.log('No map data to show');
     return;
   }
   const grid = goalMap.goal;
-  // Map object types to ASCII symbols
+  // map stuff to ascii
   const symbolMap: Record<string, string> = {
     'POLYANET': 'O',
     'SOLOON': 'S',
@@ -26,7 +27,7 @@ function printAsciiGrid(goalMap: any) {
   };
   for (const row of grid) {
     const line = row.map((cell: string) => {
-      // Try to match color/direction variants
+      // handle variants
       if (cell.endsWith('_SOLOON')) return symbolMap[cell] || 'S';
       if (cell.endsWith('_COMETH')) return symbolMap[cell] || 'C';
       return symbolMap[cell] || cell[0] || '.';
@@ -40,32 +41,34 @@ async function main() {
   const service = new MegaverseService();
   
   try {
-    // First, let's see what the goal map looks like
-    console.log('Fetching goal map...');
+    // get the goal map first
+    console.log('Getting goal map...');
     const goalMap = await client.getGoalMap();
-    console.log('\nGoal Megaverse Map (ASCII):');
+    console.log('\nGoal Map (ASCII):');
     printAsciiGrid(goalMap);
     
-    // Now build the map based on the goal
-    console.log('\nBuilding Crossmint logo from goal map...');
+    // build the logo
+    console.log('\nBuilding Crossmint logo...');
     await service.buildFromGoalMap();
     
-    console.log('\nValidating solution...');
+    // check if it worked
+    console.log('\nChecking solution...');
     const currentMap = await client.getMegaverseMap();
     
-    console.log('\nCurrent Megaverse Map:');
+    console.log('\nCurrent Map:');
     console.dir(currentMap, { depth: null });
     
-    // Validate the solution
+    // validate
     const isValid = await service.validateSolution();
-    console.log('\nSolution Validation:', isValid ? 'Yay! 🎉' : 'Nay :(');
+    console.log('\nSolution:', isValid ? '✅ Looks good!' : '❌ Something is wrong');
     
     if (!isValid) {
-      console.log('\nThe current map does not match the goal map. Please check the differences above.');
+      console.log('\nThe map doesnt match the goal. Check the differences above.');
     }
   } catch (error) {
     console.error('Error:', error);
   }
 }
 
+// run it
 main();
